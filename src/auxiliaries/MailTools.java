@@ -48,7 +48,7 @@ public class MailTools {
             MimeMultipart multiPart = new MimeMultipart();
             multiPart.addBodyPart(text);
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress("aaronlr160399@hotmail.com"));
+            message.setFrom(new InternetAddress("SU CORREO"));
             message.setRecipients(Message.RecipientType.TO,
                     InternetAddress.parse(recipient));
             message.setSubject(subject);

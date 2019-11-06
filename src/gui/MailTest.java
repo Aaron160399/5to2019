@@ -119,7 +119,7 @@ public class MailTest extends javax.swing.JFrame {
         String subject = jTextField1.getText();
         String content = jTextArea1.getText();
         boolean result = mailTools.send(mailTools.logIn(
-                "aaronlr160399@hotmail.com", ""), recipient, subject, content);
+                "SU CORREO", "SU CONTRASEÑA"), recipient, subject, content);
         return result;
     }
     
