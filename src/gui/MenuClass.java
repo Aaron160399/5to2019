@@ -6,7 +6,22 @@
 package gui;
 
 import dao.FriendDao;
+import fr.opensagres.xdocreport.converter.ConverterTypeTo;
+import fr.opensagres.xdocreport.converter.Options;
+import fr.opensagres.xdocreport.core.XDocReportException;
+import fr.opensagres.xdocreport.document.IXDocReport;
+import fr.opensagres.xdocreport.document.registry.XDocReportRegistry;
+import fr.opensagres.xdocreport.template.IContext;
+import fr.opensagres.xdocreport.template.TemplateEngineKind;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.RowFilter;
@@ -22,6 +37,7 @@ import pojo.Friend;
 public class MenuClass extends javax.swing.JFrame {
     String path = "";
     FriendDao friendDao;
+    //Creamos la variable global
     TableRowSorter<TableModel> sorter;
     /**
      * Creates new form MenuClass
@@ -31,10 +47,13 @@ public class MenuClass extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         friendDao = new FriendDao();
         loadModel();
+        Date date = new Date(1909,11,14);
+        jDateChooser1.setDate(date);
     }
     
     void loadModel(){
         DefaultTableModel defaultTableModel = friendDao.cargarModelo();
+        //Le ponemos el filtro a la tabla
         sorter = new TableRowSorter<TableModel>(defaultTableModel);
         jTable1.setModel(defaultTableModel);
         jTable1.setAutoCreateRowSorter(true);
@@ -74,6 +93,7 @@ public class MenuClass extends javax.swing.JFrame {
         jButton10 = new javax.swing.JButton();
         jLabel12 = new javax.swing.JLabel();
         jTextField8 = new javax.swing.JTextField();
+        jButton9 = new javax.swing.JButton();
         jdModify = new javax.swing.JDialog();
         jLabel13 = new javax.swing.JLabel();
         jTextField9 = new javax.swing.JTextField();
@@ -209,6 +229,13 @@ public class MenuClass extends javax.swing.JFrame {
 
         jTextField8.setEditable(false);
 
+        jButton9.setText("Print");
+        jButton9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton9ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jdShowLayout = new javax.swing.GroupLayout(jdShow.getContentPane());
         jdShow.getContentPane().setLayout(jdShowLayout);
         jdShowLayout.setHorizontalGroup(
@@ -218,7 +245,7 @@ public class MenuClass extends javax.swing.JFrame {
                     .addGroup(jdShowLayout.createSequentialGroup()
                         .addGap(46, 46, 46)
                         .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 34, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jdShowLayout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jdShowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -239,7 +266,8 @@ public class MenuClass extends javax.swing.JFrame {
                             .addGroup(jdShowLayout.createSequentialGroup()
                                 .addGap(78, 78, 78)
                                 .addComponent(jButton10)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(jButton9)))))
                 .addContainerGap())
         );
         jdShowLayout.setVerticalGroup(
@@ -264,7 +292,9 @@ public class MenuClass extends javax.swing.JFrame {
                     .addComponent(jLabel11)
                     .addComponent(jTextField8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jButton10)
+                .addGroup(jdShowLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton10)
+                    .addComponent(jButton9))
                 .addGap(10, 10, 10))
         );
 
@@ -523,6 +553,47 @@ public class MenuClass extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Error");
         }
     }//GEN-LAST:event_jButton11ActionPerformed
+
+    private void jButton9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton9ActionPerformed
+        try {
+            exportFormat();
+        } catch (XDocReportException ex) {
+            Logger.getLogger(MenuClass.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(MenuClass.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_jButton9ActionPerformed
+    
+    void exportFormat() throws 
+            XDocReportException, FileNotFoundException, IOException{
+        // 1) Load Docx file by filling Velocity template engine and cache it to the registry
+        //Obtenemos el archivo donde se encuentra el formato
+        //(Debe estar dentro de la carpeta donde se encuentra esta Clase)
+        InputStream in = MenuClass.class.getResourceAsStream("formato_clase2019.docx");
+        //Indicamos el formato de espacios a rellenar, en este caso Velocity
+        IXDocReport report = XDocReportRegistry.getRegistry().loadReport(
+                in, TemplateEngineKind.Velocity);
+        // 2) Create context Java model
+        //Creamos un contexto de JAVA
+        IContext context = report.createContext();
+        //Indico el campo (dentro del archivo de WORD y el valor)
+        context.put("name", jTextField5.getText());
+        context.put("phone", jTextField6.getText());
+        context.put("address", jTextField7.getText());
+        context.put("birthdate", jTextField8.getText());
+
+        // 3) Generate report by merging Java model with the Docx
+        //Indico el nombre de mi archivo de salida
+        String nombreFormatoSalida ="Formato_salida.docx";
+        OutputStream out = new FileOutputStream(
+                new File("src/resources/"+nombreFormatoSalida));
+        OutputStream out2 = new FileOutputStream(
+                new File("src/img/"+nombreFormatoSalida));
+        //Le indico que lo cree
+        report.process(context, out);
+        report.process(context, out2);
+        System.out.println("Creado con éxito");
+    }
     
     boolean update(Friend friend){
         if (friendDao.updateFriend(friend)) {
@@ -662,6 +733,7 @@ public class MenuClass extends javax.swing.JFrame {
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JButton jButton8;
+    private javax.swing.JButton jButton9;
     private javax.swing.JComboBox<String> jComboBox1;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private com.toedter.calendar.JDateChooser jDateChooser2;
